@@ -12,7 +12,12 @@
 #include <time.h>
 
 #define MAX_LENGTH 100
-#define BLANK_SPACE 20
+#define BLANK_SPACE_NAME 20
+#define BLANK_SPACE_INODE 10
+#define BLANK_SPACE_SIZE 8
+#define BLANK_SPACE_DATE 15
+#define BLANK_SPACE_PERMISSIONS 8
+#define BLANK_SPACE_DIR 40
 
 void fill_with_blank_spaces(char buffer[], int length){
 	int i;
@@ -21,17 +26,17 @@ void fill_with_blank_spaces(char buffer[], int length){
 	}
 }
 
-void preparing_info(char buffer[], char second_buffer[]){
+void preparing_info(char buffer[], char second_buffer[], int blank_space){
 	int space;
 
-	space = BLANK_SPACE - strlen(second_buffer);
+	space = blank_space - strlen(second_buffer);
 	fill_with_blank_spaces(second_buffer, space);
 	strcat(buffer,second_buffer);
 
 	strcpy(second_buffer, "");
 }
 
-void update_file(int file_d, struct stat *stat_buf, struct	dirent *direntp){
+void update_file(int file_d, struct stat *stat_buf, struct	dirent *direntp, char dir[]){
 	char buffer[MAX_LENGTH];
 	char second_buffer[MAX_LENGTH];
 
@@ -39,21 +44,24 @@ void update_file(int file_d, struct stat *stat_buf, struct	dirent *direntp){
 	strcpy(buffer, "");
 
 	strcpy(second_buffer, direntp->d_name);
-	preparing_info(buffer, second_buffer);
+	preparing_info(buffer, second_buffer,BLANK_SPACE_NAME);
 
 	sprintf(second_buffer, "%" PRIuMAX, (uintmax_t)direntp->d_ino);
-	preparing_info(buffer,second_buffer);
+	preparing_info(buffer,second_buffer, BLANK_SPACE_INODE);
 
 	sprintf(second_buffer, "%jd", (intmax_t)stat_buf->st_size);
-	preparing_info(buffer,second_buffer);
+	preparing_info(buffer,second_buffer,BLANK_SPACE_SIZE);
 
 	struct tm * timeinfo;
 	timeinfo = localtime (&(stat_buf->st_mtime));
 	strftime(second_buffer, 20, "%b %d %H:%M", timeinfo);
-	preparing_info(buffer,second_buffer);
+	preparing_info(buffer,second_buffer,BLANK_SPACE_DATE);
 
 	sprintf(second_buffer, "%o", stat_buf->st_mode);
-	preparing_info(buffer,second_buffer);
+	preparing_info(buffer,second_buffer,BLANK_SPACE_PERMISSIONS);
+
+	sprintf(second_buffer, "%s", dir);
+	preparing_info(buffer, second_buffer,BLANK_SPACE_DIR);
 
 	strcat(buffer, "\n");
 	write(file_d, buffer, strlen(buffer));
@@ -108,12 +116,12 @@ int main(int argc, char	*argv[]) {
 			//      printf("%10d - ",(int) stat_buf.st_ino);
 			if(S_ISREG(stat_buf.st_mode)) {
 				str = "regular";
-				update_file(file_d, &stat_buf, direntp);
+				update_file(file_d, &stat_buf, direntp, name);
 			}
 			else  if (S_ISDIR(stat_buf.st_mode)){
 				str = "directory";
 				if(strcmp( direntp->d_name, ".")  && strcmp( direntp->d_name, ".."))
-				create_process(direntp->d_name);
+				create_process(name);
 			}
 			else str = "other";
 			if(strcmp( direntp->d_name, ".")  && strcmp( direntp->d_name, ".."))
