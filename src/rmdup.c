@@ -18,7 +18,7 @@
 #define BLANK_SPACE_DATE 15
 #define BLANK_SPACE_PERMISSIONS 8
 #define BLANK_SPACE_DIR 40
-#define LINE_SIZE BLANK_SPACE_NAME+BLANK_SPACE_INODE+BLANK_SPACE_SIZE+BLANK_SPACE_DATE+BLANK_SPACE_PERMISSIONS+BLANK_SPACE_DIR
+#define LINE_SIZE BLANK_SPACE_NAME+BLANK_SPACE_INODE+BLANK_SPACE_SIZE+BLANK_SPACE_DATE+BLANK_SPACE_PERMISSIONS+BLANK_SPACE_DIR+2 //+2 because of the \n
 
 int countlines(char *filename)
 {
@@ -28,63 +28,59 @@ int countlines(char *filename)
   int lines=0;
 
   if (fp == NULL)
-    return 0;
+  return 0;
 
   while ((ch = fgetc(fp)) != EOF)
-    {
-      if (ch == '\n')
+  {
+    if (ch == '\n')
     lines++;
-    }
+  }
   fclose(fp);
   return lines;
 }
 
-void reading_file_to_array(int file_in_order, char *info[], int lines){
+void reading_file_to_array(char *info[]){
 
-/*  int ret;
+  int i=0;
+  FILE* file_in_order = fopen("files.txt", "r");
 
-  int i;
-  for(i=0; i< lines; i++){
-     ret=read(file_in_order, info, LINE_SIZE);
-     if(ret == -1){
-       perror("Error reading file");
-       exit(1);
-     }
-    sprintf(info[i], "\n");
-   }
-  for(i=0; i< lines; i++){
-   printf("%s", info[i]);
- }*/
-/*
- char* ch;
- FILE *fp;
+  if (file_in_order == 0){
+    perror("Error on opening file");
+    exit(1);
+  }
 
- fp = fopen("files.txt","r"); // read mode
+  info[i] = malloc(LINE_SIZE);
+  while(fgets(info[i], LINE_SIZE, file_in_order)){
+    printf("%s", info[i]);
+    i++;
+    info[i] = malloc(LINE_SIZE);
+  }
 
-   if( fp == NULL )
-   {
-      perror("Error while opening the file.\n");
-      exit(1);
-   }
-
-   int i=0;
-   while( ( (&ch) = fgetc(fp) ) != EOF ){
-      sprintf(info[i], ch);
-    }
-
-   fclose(fp);*/
-
+  fclose(file_in_order);
 
 }
 
-void check_duplicate_files(int file_in_order, int lines){
-//  char buffer[BLANK_SPACE_NAME];
-//  int ret= read(file_in_order, buffer, BLANK_SPACE_NAME);
-  printf("linhas : %d\n", lines);
-//  int i;
-//  for(i=0;i<lines;i++){
+void check_duplicate_files(char *info[], int lines){
 
-  //}
+  char buffer_name1[BLANK_SPACE_NAME];
+  char buffer_name2[BLANK_SPACE_NAME];
+
+  int i;
+  for(i=0;i<lines; i++){
+    memcpy(buffer_name1, info[i], BLANK_SPACE_NAME);
+    int j;
+    for(j=0;j<lines; j++){
+      if(j!=i){
+        memcpy(buffer_name2, info[j], BLANK_SPACE_NAME);
+        printf("info[i]: %s%d\n", buffer_name1,i);
+        printf("info[j]: %s%d\n", buffer_name2,j);
+        if(strcmp(buffer_name1, buffer_name2) == 0){
+          printf("São iguais\n");
+        }
+      }
+    }
+  }
+
 }
 
 int main(int argc, char	*argv[]) {
@@ -94,7 +90,7 @@ int main(int argc, char	*argv[]) {
     exit(1);
   }
 
-  int file_in_order=open("files.txt", O_WRONLY |  O_APPEND | O_CREAT | O_RDONLY , 0600);
+  int file_in_order=open("files.txt",   O_APPEND | O_CREAT | O_WRONLY , 0600);
 
   if(file_in_order == -1){
     perror("Error opening the file files.txt");
@@ -103,7 +99,7 @@ int main(int argc, char	*argv[]) {
 
   pid_t pid=fork();
   int status;
-//  char *info[MAX_LENGTH];
+  char *info[LINE_SIZE];
 
   //dup2(file_d, STDOUT_FILENO);
 
@@ -118,13 +114,13 @@ int main(int argc, char	*argv[]) {
       perror("Error on fork");
       exit(1);
     }
-    else if ( pid > 0){
+    else if ( pid > 0){   //father
       wait(&status);
-      //int lines=countlines("files.txt");
-      //reading_file_to_array(file_in_order, info, lines);
-      //check_duplicate_files(file_in_order, lines);
+      int lines=countlines("files.txt");
+      reading_file_to_array( info);
+      check_duplicate_files( info, lines);
     }
-    else if ( pid == 0){
+    else if ( pid == 0){   //child
       dup2(file_in_order, STDOUT_FILENO);
       execlp("sort", "sort", "file_disorderly.txt", NULL);
       perror("execlp ERROR");
@@ -137,7 +133,7 @@ int main(int argc, char	*argv[]) {
     exit(1);
   }
 
-    close(file_in_order);
+  close(file_in_order);
 
   exit(0);
 }

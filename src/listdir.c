@@ -92,7 +92,7 @@ int main(int argc, char	*argv[]) {
 	struct	stat stat_buf;
 	char	*str;
 	char	name[200];
-	int file_d=open("file_disorderly.txt", O_WRONLY |  O_APPEND | O_CREAT | O_RDONLY , 0600);
+	int file_d=open("file_disorderly.txt", O_WRONLY |  O_APPEND | O_CREAT  , 0600);
 
 	if(file_d == -1){
 		perror("Error opening the file file_disorderly.txt");
