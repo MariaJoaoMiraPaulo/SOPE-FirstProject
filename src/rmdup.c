@@ -170,7 +170,7 @@ void check_duplicate_files(Compare_files info[], int size_of_array){
 }
 
 int main(int argc, char	*argv[]) {
-
+  
   if	(argc != 2) {
     fprintf( stderr, "Usage: %s dir_name\n", argv[0]);
     exit(1);

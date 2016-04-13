@@ -29,7 +29,7 @@ timeinfo = localtime (&(stat_buf->st_mtime));
 strftime(temp_date, 20, "%b %d %H:%M", timeinfo);
 
 
-sprintf(buffer,"%-20s %-20s %-20jd %-20s %-20o %-20s\n",direntp->d_name,temp_inode,(intmax_t)stat_buf->st_size,temp_date,stat_buf->st_mode,dir);
+sprintf(buffer,"%-20s %-10s %-8jd %-15s %-8o %-40s\n",direntp->d_name,temp_inode,(intmax_t)stat_buf->st_size,temp_date,stat_buf->st_mode,dir);
 write(file_d,buffer,strlen(buffer));
 
 }
