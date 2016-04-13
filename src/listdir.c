@@ -17,20 +17,21 @@
 
 void update_file(int file_d, struct stat *stat_buf, struct	dirent *direntp, char dir[]){
 
-char buffer[MAX_LENGTH];
-char temp_date[DATE_LENGTH];
-char temp_inode[INODE_LENGTH];
+	char buffer[MAX_LENGTH];
+	char temp_date[DATE_LENGTH];
+	char temp_inode[INODE_LENGTH];
 
-sprintf(temp_inode, "%" PRIuMAX, (uintmax_t)direntp->d_ino);
-
-
-struct tm * timeinfo;
-timeinfo = localtime (&(stat_buf->st_mtime));
-strftime(temp_date, 20, "%b %d %H:%M", timeinfo);
+	sprintf(temp_inode, "%" PRIuMAX, (uintmax_t)direntp->d_ino);
 
 
-sprintf(buffer,"%-20s %-10s %-8jd %-15s %-8o %-40s\n",direntp->d_name,temp_inode,(intmax_t)stat_buf->st_size,temp_date,stat_buf->st_mode,dir);
-write(file_d,buffer,strlen(buffer));
+	struct tm * timeinfo;
+	timeinfo = localtime (&(stat_buf->st_mtime));
+	strftime(temp_date, 20, "%b %d %H:%M", timeinfo);
+
+
+	sprintf(buffer,"%-20s %-20s %-20jd %-20s %-20o %-40s\n",direntp->d_name,temp_inode,(intmax_t)stat_buf->st_size,temp_date,stat_buf->st_mode,dir);
+	write(file_d,buffer,strlen(buffer));
+
 
 }
 

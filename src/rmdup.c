@@ -12,27 +12,20 @@
 #include <time.h>
 #include <stdbool.h>
 
-#define MAX_LENGTH 1000
-#define BLANK_SPACE_NAME 20
-#define BLANK_SPACE_INODE 10
-#define BLANK_SPACE_SIZE 8
-#define BLANK_SPACE_DATE 15
-#define BLANK_SPACE_PERMISSIONS 8
-#define BLANK_SPACE_DIR 40
-#define LINE_SIZE BLANK_SPACE_NAME+BLANK_SPACE_INODE+BLANK_SPACE_SIZE+BLANK_SPACE_DATE+BLANK_SPACE_PERMISSIONS+BLANK_SPACE_DIR+2 //+2 because of the \n
+#define LINE_SIZE_ON_FILE 146
+#define INDEX_NAME 0
+#define INDEX_INODE 21
+#define INDEX_SIZE 42
+#define INDEX_DATE 63
+#define INDEX_PERMISSION 84
+#define INDEX_PATH 105
 
 typedef struct {
-  int day;
-  int month;
-  int hour;
-  int min;
-} Date;
-
-typedef struct {
-  char name[BLANK_SPACE_NAME+1];
+  //char name[BLANK_SPACE_NAME+1];
+  char *name;
   unsigned int size;
-  char path[BLANK_SPACE_DIR+1];
-  Date modification_date;
+  //char path[BLANK_SPACE_DIR+1];
+  char *path;
 }Compare_files;
 
 int countlines(char *filename)
@@ -59,65 +52,44 @@ void reading_file_to_array(Compare_files info[], int lines){
   int i=0;
   int ret;
   FILE* file_in_order = fopen("files.txt", "r");
-  char buffer[LINE_SIZE];
-  char buffer_size[BLANK_SPACE_SIZE+1];
+  char buffer[LINE_SIZE_ON_FILE];
+  char *second_buffer[6];
 
   if (file_in_order == NULL){
     perror("Error on opening file");
     exit(1);
   }
-  /*
-  info[i] = malloc(LINE_SIZE);
-  while(fgets(info[i], LINE_SIZE, file_in_order)){
-  printf("%s", info[i]);
-  i++;
-  info[i] = malloc(LINE_SIZE);
-}
-*/
 
-while(i < lines){
-  ret=fread(buffer,(BLANK_SPACE_NAME+BLANK_SPACE_INODE), sizeof(char),file_in_order);
-  if(ret != sizeof(char)){
-    perror("Error on reading the file");
-    exit(1);
-  }
-  memcpy(info[i].name, buffer, BLANK_SPACE_NAME);
-  info[i].name[BLANK_SPACE_NAME]='\0';
+  while(i < lines){
 
-  ret=fread(buffer, BLANK_SPACE_SIZE, sizeof(char), file_in_order);
-  if(ret != sizeof(char)){
-    perror("Error on reading the file");
-    exit(1);
-  }
-  memcpy(buffer_size, buffer, BLANK_SPACE_SIZE);
-  buffer_size[BLANK_SPACE_SIZE]='\0';
-  info[i].size = atoi(buffer_size);
+    ret=fread(buffer, sizeof(char), LINE_SIZE_ON_FILE, file_in_order);
+    if(ret != LINE_SIZE_ON_FILE){
+      perror("Error on reading the file");
+      exit(1);
+    }
 
-  ret=fread(buffer, BLANK_SPACE_DATE+BLANK_SPACE_PERMISSIONS, sizeof(char), file_in_order);
-  if(ret != sizeof(char)){
-    perror("Error on reading the file");
-    exit(1);
+    buffer[INDEX_INODE-1]='\0';
+    buffer[INDEX_SIZE-1]='\0';
+    buffer[INDEX_DATE-1]='\0';
+    buffer[INDEX_PERMISSION-1]='\0';
+    buffer[INDEX_PATH-1]='\0';
+    buffer[LINE_SIZE_ON_FILE-1]='\0';
+
+    second_buffer[0]=&buffer[INDEX_NAME];  //name
+    second_buffer[1]=&buffer[INDEX_INODE]; //inode
+    second_buffer[2]=&buffer[INDEX_SIZE];  //size
+    second_buffer[3]=&buffer[INDEX_DATE];  //date
+    second_buffer[4]=&buffer[INDEX_PERMISSION];  //permissions
+    second_buffer[5]=&buffer[INDEX_PATH];    //path
+
+    info[i].name = strtok(second_buffer[0], " ");
+    info[i].size = atoi(second_buffer[2]);
+    info[i].path = strtok(second_buffer[5], " ");
+
+    i++;
   }
 
-  ret=fread(buffer, BLANK_SPACE_DIR, sizeof(char), file_in_order);
-  if(ret != sizeof(char)){
-    perror("Error on reading the file");
-    exit(1);
-  }
-
-  memcpy(info[i].path, buffer, BLANK_SPACE_DIR+1);
-  info[i].path[BLANK_SPACE_DIR]='\0';
-
-  ret=fread(buffer, 1 , sizeof(char), file_in_order);
-  if(ret != sizeof(char)){
-    perror("Error on reading the file");
-    exit(1);
-  }
-
-  i++;
-}
-
-fclose(file_in_order);
+  fclose(file_in_order);
 
 }
 
@@ -127,6 +99,8 @@ int compare_file_content(char *path_file_1, char *path_file_2){
   bool eof=false;
   int ch_file_1;
   int ch_file_2;
+
+  printf("ENTREI NO CHECK CONTEN \n");
 
   if(file_1 == NULL || file_2 == NULL){
     perror("Error on opening files to compare content" );
@@ -151,6 +125,7 @@ int compare_file_content(char *path_file_1, char *path_file_2){
 
 void check_duplicate_files(Compare_files info[], int size_of_array){
 
+  printf("ENTREI NO CHECK DUPLICATE \n");
   int i;
   for(i=0; i< size_of_array; i++){
     int j;
@@ -170,7 +145,7 @@ void check_duplicate_files(Compare_files info[], int size_of_array){
 }
 
 int main(int argc, char	*argv[]) {
-  
+
   if	(argc != 2) {
     fprintf( stderr, "Usage: %s dir_name\n", argv[0]);
     exit(1);
@@ -204,7 +179,7 @@ int main(int argc, char	*argv[]) {
       int lines=countlines("files.txt");
       Compare_files info[lines];
       reading_file_to_array(info, lines);
-      check_duplicate_files( info, lines);
+      //check_duplicate_files( info, lines);
     }
     else if ( pid == 0){   //child
       dup2(file_in_order, STDOUT_FILENO);
@@ -214,7 +189,7 @@ int main(int argc, char	*argv[]) {
     }
   }
   else if(pid == 0){  //child
-    execlp("listdir","listdir", argv[1], NULL);
+    execlp("./listdir","listdir", argv[1], NULL);
     perror("execlp ERROR");
     exit(1);
   }
