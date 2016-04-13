@@ -11,60 +11,27 @@
 #include <inttypes.h>
 #include <time.h>
 
-#define MAX_LENGTH 100
-#define BLANK_SPACE_NAME 20
-#define BLANK_SPACE_INODE 10
-#define BLANK_SPACE_SIZE 8
-#define BLANK_SPACE_DATE 15
-#define BLANK_SPACE_PERMISSIONS 8
-#define BLANK_SPACE_DIR 40
-
-void fill_with_blank_spaces(char buffer[], int length){
-	int i;
-	for(i=0; i<length; i++){
-		strcat(buffer, " ");
-	}
-}
-
-void preparing_info(char buffer[], char second_buffer[], int blank_space){
-	int space;
-
-	space = blank_space - strlen(second_buffer);
-	fill_with_blank_spaces(second_buffer, space);
-	strcat(buffer,second_buffer);
-
-	strcpy(second_buffer, "");
-}
+#define MAX_LENGTH 300
+#define INODE_LENGTH 50
+#define DATE_LENGTH 50
 
 void update_file(int file_d, struct stat *stat_buf, struct	dirent *direntp, char dir[]){
-	char buffer[MAX_LENGTH];
-	char second_buffer[MAX_LENGTH];
 
-	strcpy(second_buffer, "");   //cleaning string, to avoid errors
-	strcpy(buffer, "");
+char buffer[MAX_LENGTH];
+char temp_date[DATE_LENGTH];
+char temp_inode[INODE_LENGTH];
 
-	strcpy(second_buffer, direntp->d_name);
-	preparing_info(buffer, second_buffer,BLANK_SPACE_NAME);
+sprintf(temp_inode, "%" PRIuMAX, (uintmax_t)direntp->d_ino);
 
-	sprintf(second_buffer, "%" PRIuMAX, (uintmax_t)direntp->d_ino);
-	preparing_info(buffer,second_buffer, BLANK_SPACE_INODE);
 
-	sprintf(second_buffer, "%jd", (intmax_t)stat_buf->st_size);
-	preparing_info(buffer,second_buffer,BLANK_SPACE_SIZE);
+struct tm * timeinfo;
+timeinfo = localtime (&(stat_buf->st_mtime));
+strftime(temp_date, 20, "%b %d %H:%M", timeinfo);
 
-	struct tm * timeinfo;
-	timeinfo = localtime (&(stat_buf->st_mtime));
-	strftime(second_buffer, 20, "%b %d %H:%M", timeinfo);
-	preparing_info(buffer,second_buffer,BLANK_SPACE_DATE);
 
-	sprintf(second_buffer, "%o", stat_buf->st_mode);
-	preparing_info(buffer,second_buffer,BLANK_SPACE_PERMISSIONS);
+sprintf(buffer,"%-20s %-20s %-20jd %-20s %-20o %-20s\n",direntp->d_name,temp_inode,(intmax_t)stat_buf->st_size,temp_date,stat_buf->st_mode,dir);
+write(file_d,buffer,strlen(buffer));
 
-	sprintf(second_buffer, "%s", dir);
-	preparing_info(buffer, second_buffer,BLANK_SPACE_DIR);
-
-	strcat(buffer, "\n");
-	write(file_d, buffer, strlen(buffer));
 }
 
 pid_t create_process(char arg[]){
@@ -77,7 +44,7 @@ pid_t create_process(char arg[]){
 	}
 
 	else if(pid == 0){
-		execlp("listdir","listdir", arg, NULL);
+		execlp("./listdir","listdir", arg, NULL);
 		perror("execLp ERROR");
 		exit(1);
 	}
