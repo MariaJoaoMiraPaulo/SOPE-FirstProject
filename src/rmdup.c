@@ -85,12 +85,22 @@ void reading_file_to_array(Compare_files info[], int lines){
     second_buffer[2]=&buffer[INDEX_SIZE];  //Size
     second_buffer[3]=&buffer[INDEX_DATE];  //Date
     second_buffer[4]=&buffer[INDEX_PERMISSION];  //Permissions
-    second_buffer[5]=&buffer[INDEX_PATH];    //Path
+  //  second_buffer[5]=&buffer[INDEX_PATH];    //Path
+
+    int j;
+    for(j=INDEX_PATH; j<146; j++){
+      if(buffer[j] == '/' ){
+        break;
+      }
+    }
+
+      second_buffer[5]=&buffer[j+1];
 
     //Load information to the struct info
     strcpy(info[i].name,second_buffer[0]);
     info[i].size = atoi(second_buffer[2]);
     strcpy(info[i].path,second_buffer[5]);
+
     i++;
   }
 
@@ -99,11 +109,17 @@ void reading_file_to_array(Compare_files info[], int lines){
 }
 
 int compare_file_content(char *path_file_1, char *path_file_2){
+
+  path_file_1 = strtok(path_file_1, " ");
+  path_file_2 = strtok(path_file_2, " ");
+
   FILE* file_1= fopen(path_file_1, "r");
   FILE* file_2= fopen(path_file_2, "r");
   bool eof=false;
   int ch_file_1;
   int ch_file_2;
+
+  printf("Path_1: %s\nPath_2: %s\n", path_file_1, path_file_2);
 
   if(file_1 == NULL || file_2 == NULL){
     perror("Error on opening files to compare content" );
@@ -127,20 +143,21 @@ int compare_file_content(char *path_file_1, char *path_file_2){
 }
 
 void check_duplicate_files(Compare_files info[], int size_of_array){
-
-for (int i=0;i<size_of_array;i++){
+int i;
+for (i=0;i<size_of_array;i++){
   printf("Name: %s\n Size:%d \n Path:%s \n",info[i].name,info[i].size, info[i].path);
 }
 
 printf("ENTREI NO CHECK DUPLICATE \n");
 
 
-int i;
+//int i;
 for(i=0; i< size_of_array; i++){
   int j;
   for(j=i+1; j< size_of_array; j++){
     if(strcmp(info[i].name, info[j].name) == 0 && info[i].size==info[j].size){
       //If the name is the same, check the content
+      printf("Name_1: %s\nName_2: %s\n", info[i].name, info[j].name);
       if(compare_file_content(info[i].path, info[j].path)==0){
         i++;
         printf("Os dois ficheiros sao iguais\n");
