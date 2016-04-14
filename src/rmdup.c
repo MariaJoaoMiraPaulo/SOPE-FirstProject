@@ -21,16 +21,17 @@
 #define INDEX_PATH 105
 
 typedef struct {
-  //char name[BLANK_SPACE_NAME+1];
-  char *name;
+  char name[200];
+  //char *name;
   unsigned int size;
-  //char path[BLANK_SPACE_DIR+1];
-  char *path;
+  char path[200];
+  //char *path;
 }Compare_files;
 
+//Count the number of lines in the file called filename
 int countlines(char *filename)
 {
-  // count the number of lines in the file called filename
+  //Open the file
   FILE *fp = fopen(filename,"r");
   int ch=0;
   int lines=0;
@@ -38,6 +39,7 @@ int countlines(char *filename)
   if (fp == NULL)
   return 0;
 
+  //Check how many '\n' (lines) the file have, reading char by char
   while ((ch = fgetc(fp)) != EOF)
   {
     if (ch == '\n')
@@ -47,10 +49,12 @@ int countlines(char *filename)
   return lines;
 }
 
+//Read file and load information on array of the type Compare_files (struct)
 void reading_file_to_array(Compare_files info[], int lines){
 
   int i=0;
   int ret;
+  //Open file
   FILE* file_in_order = fopen("files.txt", "r");
   char buffer[LINE_SIZE_ON_FILE];
   char *second_buffer[6];
@@ -61,13 +65,14 @@ void reading_file_to_array(Compare_files info[], int lines){
   }
 
   while(i < lines){
-
+    //Read an entire line with the information of one regular file
     ret=fread(buffer, sizeof(char), LINE_SIZE_ON_FILE, file_in_order);
     if(ret != LINE_SIZE_ON_FILE){
       perror("Error on reading the file");
       exit(1);
     }
 
+    //Add an '\0' on the space between two strings, to indicate the end of the string and the beggining of another
     buffer[INDEX_INODE-1]='\0';
     buffer[INDEX_SIZE-1]='\0';
     buffer[INDEX_DATE-1]='\0';
@@ -75,22 +80,25 @@ void reading_file_to_array(Compare_files info[], int lines){
     buffer[INDEX_PATH-1]='\0';
     buffer[LINE_SIZE_ON_FILE-1]='\0';
 
-    second_buffer[0]=&buffer[INDEX_NAME];  //name
-    second_buffer[1]=&buffer[INDEX_INODE]; //inode
-    second_buffer[2]=&buffer[INDEX_SIZE];  //size
-    second_buffer[3]=&buffer[INDEX_DATE];  //date
-    second_buffer[4]=&buffer[INDEX_PERMISSION];  //permissions
-    second_buffer[5]=&buffer[INDEX_PATH];    //path
+    second_buffer[0]=&buffer[INDEX_NAME];  //Name
+    second_buffer[1]=&buffer[INDEX_INODE]; //Inode
+    second_buffer[2]=&buffer[INDEX_SIZE];  //Size
+    second_buffer[3]=&buffer[INDEX_DATE];  //Date
+    second_buffer[4]=&buffer[INDEX_PERMISSION];  //Permissions
+    second_buffer[5]=&buffer[INDEX_PATH];    //Path
 
-    info[i].name = strtok(second_buffer[0], " ");
+    //Load information to the struct info
+    strcpy(info[i].name,second_buffer[0]);
+    //info[i].name = strtok(second_buffer[0], " ");
     info[i].size = atoi(second_buffer[2]);
-    info[i].path = strtok(second_buffer[5], " ");
+    strcpy(info[i].path,second_buffer[5]);
+    //  info[i].path = strtok(second_buffer[5], " ");
 
     i++;
   }
 
-  fclose(file_in_order);
 
+  fclose(file_in_order);
 }
 
 int compare_file_content(char *path_file_1, char *path_file_2){
@@ -99,8 +107,6 @@ int compare_file_content(char *path_file_1, char *path_file_2){
   bool eof=false;
   int ch_file_1;
   int ch_file_2;
-
-  printf("ENTREI NO CHECK CONTEN \n");
 
   if(file_1 == NULL || file_2 == NULL){
     perror("Error on opening files to compare content" );
@@ -125,22 +131,29 @@ int compare_file_content(char *path_file_1, char *path_file_2){
 
 void check_duplicate_files(Compare_files info[], int size_of_array){
 
-  printf("ENTREI NO CHECK DUPLICATE \n");
-  int i;
-  for(i=0; i< size_of_array; i++){
-    int j;
-    for(j=i+1; j< size_of_array; j++){
-      if(strcmp(info[i].name, info[j].name) == 0 && info[i].size==info[j].size){
-        if(compare_file_content(info[i].path, info[j].path)==0){
-          i++;
-          printf("Os dois ficheiros sao iguais\n");
-        }
-      }
-      if(info[i].name[0] != info[j].name[0]){
-        break;
+for (int i=0;i<size_of_array;i++){
+  printf("Name: %s\n Size:%d \n Path:%s \n",info[i].name,info[i].size, info[i].path);
+}
+
+printf("ENTREI NO CHECK DUPLICATE \n");
+
+
+int i;
+for(i=0; i< size_of_array; i++){
+  int j;
+  for(j=i+1; j< size_of_array; j++){
+    if(strcmp(info[i].name, info[j].name) == 0 && info[i].size==info[j].size){
+      //If the name is the same, check the content
+      if(compare_file_content(info[i].path, info[j].path)==0){
+        i++;
+        printf("Os dois ficheiros sao iguais\n");
       }
     }
+    if(info[i].name[0] != info[j].name[0]){
+      break;
+    }
   }
+}
 
 }
 
@@ -179,7 +192,7 @@ int main(int argc, char	*argv[]) {
       int lines=countlines("files.txt");
       Compare_files info[lines];
       reading_file_to_array(info, lines);
-      //check_duplicate_files( info, lines);
+      check_duplicate_files( info, lines);
     }
     else if ( pid == 0){   //child
       dup2(file_in_order, STDOUT_FILENO);
