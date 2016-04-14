@@ -19,13 +19,13 @@
 #define INDEX_DATE 63
 #define INDEX_PERMISSION 84
 #define INDEX_PATH 105
+#define SIZE_BUFFER_NAME 200
+#define SIZE_BUFFER_PATH 200
 
 typedef struct {
-  char name[200];
-  //char *name;
+  char name[SIZE_BUFFER_NAME];
   unsigned int size;
-  char path[200];
-  //char *path;
+    char path[SIZE_BUFFER_PATH];
 }Compare_files;
 
 //Count the number of lines in the file called filename
@@ -89,11 +89,8 @@ void reading_file_to_array(Compare_files info[], int lines){
 
     //Load information to the struct info
     strcpy(info[i].name,second_buffer[0]);
-    //info[i].name = strtok(second_buffer[0], " ");
     info[i].size = atoi(second_buffer[2]);
     strcpy(info[i].path,second_buffer[5]);
-    //  info[i].path = strtok(second_buffer[5], " ");
-
     i++;
   }
 
@@ -173,8 +170,6 @@ int main(int argc, char	*argv[]) {
 
   pid_t pid=fork();
   int status;
-
-  //dup2(file_d, STDOUT_FILENO);
 
   if(pid == -1){
     perror("Error on fork");
