@@ -28,6 +28,19 @@ typedef struct {
     char path[SIZE_BUFFER_PATH];
 }Compare_files;
 
+void resetingFiles(){
+  FILE* file1 = fopen("files.txt", "w");
+  FILE* file2 = fopen("file_disorderly.txt" , "w");
+
+  if( file1 == NULL || file2 == NULL){
+    perror("Error on opening files to compare content" );
+    exit(1);
+  }
+
+  fclose(file1);
+  fclose(file2);
+}
+
 //Count the number of lines in the file called filename
 int countlines(char *filename)
 {
@@ -85,16 +98,7 @@ void reading_file_to_array(Compare_files info[], int lines){
     second_buffer[2]=&buffer[INDEX_SIZE];  //Size
     second_buffer[3]=&buffer[INDEX_DATE];  //Date
     second_buffer[4]=&buffer[INDEX_PERMISSION];  //Permissions
-  //  second_buffer[5]=&buffer[INDEX_PATH];    //Path
-
-    int j;
-    for(j=INDEX_PATH; j<146; j++){
-      if(buffer[j] == '/' ){
-        break;
-      }
-    }
-
-      second_buffer[5]=&buffer[j+1];
+    second_buffer[5]=&buffer[INDEX_PATH];    //Path
 
     //Load information to the struct info
     strcpy(info[i].name,second_buffer[0]);
@@ -177,6 +181,8 @@ int main(int argc, char	*argv[]) {
     fprintf( stderr, "Usage: %s dir_name\n", argv[0]);
     exit(1);
   }
+
+  resetingFiles();
 
   int file_in_order=open("files.txt",   O_APPEND | O_CREAT | O_WRONLY , 0600);
 
