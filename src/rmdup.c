@@ -21,6 +21,7 @@
 #define INDEX_PATH 105
 #define SIZE_BUFFER_NAME 200
 #define SIZE_BUFFER_PATH 200
+int result=0;
 
 typedef struct {
   char name[SIZE_BUFFER_NAME];
@@ -112,10 +113,81 @@ void reading_file_to_array(Compare_files info[], int lines){
   fclose(file_in_order);
 }
 
+
+int compare_time_last_data_modification( char* path_file_1, char* path_file_2){
+
+  path_file_1 = strtok(path_file_1, " ");
+  path_file_2 = strtok(path_file_2, " ");
+
+  struct stat buf;
+  time_t path_file_1_time,path_file_2_time;
+  double seconds;
+
+  //Fill struct stat of file_1 to get the time of last data modification.
+  lstat(path_file_1,&buf);
+  path_file_1_time=buf.st_mtime;
+
+  //Fill struct stat of file_2 to get the time of last data modification.
+  lstat(path_file_2,&buf);
+  path_file_2_time=buf.st_mtime;
+
+  //Calculate the diff between the two dates
+  seconds=difftime(path_file_1_time,path_file_2_time);
+
+  //if the diff between the two dates are bigger than 0 it means that file1 date is bigger->1_file is more recent
+  if(seconds>0){
+    printf("FICHEIRO %s TEM DATA MAIOR QUE O FICHEIRO %s \n",path_file_1,path_file_2);
+    return 1;
+
+  }
+
+//if the diff between the two dates are lesser than 0 it means that file1 date is lesser-> 1_file is older
+  else if(seconds<0){
+    printf("FICHEIRO %s TEM DATA MENOR QUE O FICHEIRO %s \n",path_file_1,path_file_2);
+    return 2;
+  }
+
+  else{
+    printf("os DATAS DOS ficheiros sao IGUAIS\n");
+    return 0;
+  }
+  return 0;
+
+}
+
+int compare_file_permissons(char *path_file_1, char *path_file_2){
+
+  path_file_1 = strtok(path_file_1, " ");
+  path_file_2 = strtok(path_file_2, " ");
+
+  struct stat buf;
+  int path_file_1_permissons,path_file_2_permissons;
+
+  //Fill struct stat of file_1 to get the permissons of the file.
+  lstat(path_file_1,&buf);
+  path_file_1_permissons=buf.st_mode;
+
+  //Fill struct stat of file_2 to get the permissons of the file.
+  lstat(path_file_2,&buf);
+  path_file_2_permissons=buf.st_mode;
+
+  //the two files have the same permissons
+  if(path_file_1_permissons==path_file_2_permissons){
+      return 0;
+  }
+
+
+  return 1;
+
+}
+
 int compare_file_content(char *path_file_1, char *path_file_2){
 
   path_file_1 = strtok(path_file_1, " ");
   path_file_2 = strtok(path_file_2, " ");
+  bool content=false;
+  bool dates=false;
+  bool permissons=false;
 
   FILE* file_1= fopen(path_file_1, "r");
   FILE* file_2= fopen(path_file_2, "r");
@@ -143,24 +215,24 @@ int compare_file_content(char *path_file_1, char *path_file_2){
     }
   }
 
+  result=compare_time_last_data_modification(path_file_1,path_file_2);
   return 0;
 }
 
 void check_duplicate_files(Compare_files info[], int size_of_array){
 int i;
+
+
 for (i=0;i<size_of_array;i++){
   printf("Name: %s\n Size:%d \n Path:%s \n",info[i].name,info[i].size, info[i].path);
 }
-
-printf("ENTREI NO CHECK DUPLICATE \n");
-
 
 //int i;
 for(i=0; i< size_of_array; i++){
   int j;
   for(j=i+1; j< size_of_array; j++){
-    if(strcmp(info[i].name, info[j].name) == 0 && info[i].size==info[j].size){
-      //If the name is the same, check the content
+    if(strcmp(info[i].name, info[j].name) == 0 && info[i].size==info[j].size && compare_file_permissons(info[i].path, info[j].path)==0){
+      //If the name, the size and the permissons are the same, check the content of files
       printf("Name_1: %s\nName_2: %s\n", info[i].name, info[j].name);
       if(compare_file_content(info[i].path, info[j].path)==0){
         i++;
