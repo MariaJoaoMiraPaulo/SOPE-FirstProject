@@ -136,19 +136,19 @@ int compare_time_last_data_modification( char* path_file_1, char* path_file_2){
 
   //if the diff between the two dates are bigger than 0 it means that file1 date is bigger->1_file is more recent
   if(seconds>0){
-    printf("FICHEIRO %s TEM DATA MAIOR QUE O FICHEIRO %s \n",path_file_1,path_file_2);
+    printf("Ficheiro %s é mais recente que ficheiro %s \n",path_file_1,path_file_2);
     return 1;
 
   }
 
 //if the diff between the two dates are lesser than 0 it means that file1 date is lesser-> 1_file is older
   else if(seconds<0){
-    printf("FICHEIRO %s TEM DATA MENOR QUE O FICHEIRO %s \n",path_file_1,path_file_2);
+    printf("ficheiro %s é mais antigo que  %s \n",path_file_1,path_file_2);
     return 2;
   }
 
   else{
-    printf("os DATAS DOS ficheiros sao IGUAIS\n");
+    printf("as datas sao iguais\n");
     return 0;
   }
   return 0;
