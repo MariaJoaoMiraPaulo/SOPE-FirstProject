@@ -136,19 +136,19 @@ int compare_time_last_data_modification( char* path_file_1, char* path_file_2){
 
   //if the diff between the two dates are bigger than 0 it means that file1 date is bigger->1_file is more recent
   if(seconds>0){
-    printf("Ficheiro %s é mais recente que ficheiro %s \n",path_file_1,path_file_2);
+  //  printf("Ficheiro %s é mais recente que ficheiro %s \n",path_file_1,path_file_2);
     return 1;
 
   }
 
   //if the diff between the two dates are lesser than 0 it means that file1 date is lesser-> 1_file is older
   else if(seconds<0){
-    printf("ficheiro %s é mais antigo que  %s \n",path_file_1,path_file_2);
+  //  printf("ficheiro %s é mais antigo que  %s \n",path_file_1,path_file_2);
     return 2;
   }
 
   else{
-    printf("as datas sao iguais\n");
+  //  printf("as datas sao iguais\n");
     return 0;
   }
   return 0;
@@ -247,11 +247,11 @@ void creating_hard_links(Compare_files info[], int info_size, int index[MAX_NUMB
 
   int ret_date;
   int more_recent_file = 1;
+  FILE* hard_link_file= fopen("hlinks.txt", "w"); //open the file to put the info relatively to the hard links
 
   int i;
   for(i=0; i<index_size; i++){
-    int j;
-    printf("Tamanho do index : %d", index[i][0]);
+    int j;   //cycle used to see what file has the most recent modification date
     for(j = 2; j<index[i][0]; j++){
       ret_date = compare_time_last_data_modification(info[index[i][more_recent_file]].path, info[index[i][j]].path);
       if(ret_date >= 0){
@@ -259,13 +259,20 @@ void creating_hard_links(Compare_files info[], int info_size, int index[MAX_NUMB
       }
       else more_recent_file = j;
     }
+    fwrite("Path ficheiro de origem:  ", sizeof(char), 26, hard_link_file);
+    fwrite(info[index[i][more_recent_file]].path, sizeof(char), strlen(info[index[i][more_recent_file]].path), hard_link_file);
+    fwrite("\nPath dos outros ficheiros:  ", sizeof(char), 28, hard_link_file);
+
+    //cycle to do the hard links to the file with the most recent modification date
     for(j = 1; j<index[i][0]; j++){
       if( j != more_recent_file){
-        printf("Vou fazer um link\n");
+        fwrite(info[index[i][j]].path, sizeof(char), strlen(info[index[i][j]].path), hard_link_file);
+        fwrite("     ", sizeof(char), 5, hard_link_file);
         unlink(info[index[i][j]].path);
         link(info[index[i][more_recent_file]].path, info[index[i][j]].path);
       }
     }
+    fwrite("\n\n", sizeof(char), 2, hard_link_file);
   }
 
 }
@@ -288,10 +295,6 @@ void check_duplicate_files(Compare_files info[], int size_of_array){
 
   if(found){
     creating_hard_links(info, size_of_array, index, x);
-  }
-
-  for(i=0;i<x;i++){
-    printf("NUMERO DE FICHEIROS IGUAIS %d \n",index[i][0]-1);
   }
 
 }
