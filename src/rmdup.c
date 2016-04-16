@@ -22,7 +22,6 @@
 #define SIZE_BUFFER_NAME 200
 #define SIZE_BUFFER_PATH 200
 #define MAX_NUMBER_FILES 100
-int result=0;
 
 typedef struct {
   char name[SIZE_BUFFER_NAME];
@@ -30,7 +29,7 @@ typedef struct {
   char path[SIZE_BUFFER_PATH];
 }Compare_files;
 
-void resetingFiles(){
+void reseting_files(){
   FILE* file1 = fopen("files.txt", "w");
   FILE* file2 = fopen("file_disorderly.txt" , "w");
 
@@ -173,7 +172,6 @@ int compare_file_permissons(char *path_file_1, char *path_file_2){
   path_file_2_permissons=buf.st_mode;
 
   //the two files have the same permissons
-  printf("Permissons1 :%d Permissons2: %d \n",path_file_1_permissons ,path_file_2_permissons);
   if(path_file_1_permissons==path_file_2_permissons){
     return 0;
   }
@@ -220,14 +218,9 @@ int files_equals_to(Compare_files info[],int position, int* index, int size_of_a
   bool found=false;
   for(i=position+1;i<size_of_array;i++){
     if(info[position].size == info[i].size){
-      printf("Size1 :%d Size2: %d \n",info[position].size ,info[i].size);
-
       if(compare_file_permissons(info[position].path, info[position].path)==0){
         if(strcmp(info[position].name,info[i].name)==0){
-          printf("Nome1 :%s Nome2: %s \n",info[position].name ,info[i].name);
-
           if(compare_file_content(info[position].path, info[position].path)==0){
-            printf("Encontrei 1 ficheiros igual\n");
             if(!found){
               index[j]=position;
               j++;
@@ -244,28 +237,61 @@ int files_equals_to(Compare_files info[],int position, int* index, int size_of_a
   }
 
   if(found)
-  index[0]=ret;
+    index[0]=ret+1;    //size of each line of array index
 
   return ret;
+
+}
+
+void creating_hard_links(Compare_files info[], int info_size, int index[MAX_NUMBER_FILES][MAX_NUMBER_FILES], int index_size){
+
+  int ret_date;
+  int more_recent_file = 1;
+
+  int i;
+  for(i=0; i<index_size; i++){
+    int j;
+    printf("Tamanho do index : %d", index[i][0]);
+    for(j = 2; j<index[i][0]; j++){
+      ret_date = compare_time_last_data_modification(info[index[i][more_recent_file]].path, info[index[i][j]].path);
+      if(ret_date >= 0){
+        more_recent_file = j-1;
+      }
+      else more_recent_file = j;
+    }
+    for(j = 1; j<index[i][0]; j++){
+      if( j != more_recent_file){
+        printf("Vou fazer um link\n");
+        unlink(info[index[i][j]].path);
+        link(info[index[i][more_recent_file]].path, info[index[i][j]].path);
+      }
+    }
+  }
 
 }
 
 void check_duplicate_files(Compare_files info[], int size_of_array){
   int i,ret=0,x=0;
   int index[MAX_NUMBER_FILES][MAX_NUMBER_FILES];
+  bool found=false;
 
   //int i;
   for(i=0; i< size_of_array; i++){
     ret=files_equals_to(info,i,index[x],size_of_array);
     if(ret>0){
+      found=true;
       x++;
       i=i+ret-1;
     }
 
   }
 
+  if(found){
+    creating_hard_links(info, size_of_array, index, x);
+  }
+
   for(i=0;i<x;i++){
-    printf("NUMERO DE FICHEIROS IGUAIS %d \n",index[i][0]);
+    printf("NUMERO DE FICHEIROS IGUAIS %d \n",index[i][0]-1);
   }
 
 }
@@ -278,7 +304,7 @@ int main(int argc, char	*argv[]) {
     exit(1);
   }
 
-  resetingFiles();
+  reseting_files();
 
   int file_in_order=open("files.txt",   O_APPEND | O_CREAT | O_WRONLY , 0600);
 
