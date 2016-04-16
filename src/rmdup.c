@@ -23,6 +23,9 @@
 #define SIZE_BUFFER_PATH 200
 #define MAX_NUMBER_FILES 100
 
+#define INFO_FILE_SORTED "files.txt"
+#define INFO_FILE_UNSORTED "file_disorderly.txt"
+
 typedef struct {
   char name[SIZE_BUFFER_NAME];
   unsigned int size;
@@ -30,8 +33,8 @@ typedef struct {
 }Compare_files;
 
 void reseting_files(){
-  FILE* file1 = fopen("files.txt", "w");
-  FILE* file2 = fopen("file_disorderly.txt" , "w");
+  FILE* file1 = fopen(INFO_FILE_SORTED, "w");
+  FILE* file2 = fopen(INFO_FILE_UNSORTED , "w");
 
   if( file1 == NULL || file2 == NULL){
     perror("Error on opening files to compare content" );
@@ -69,7 +72,7 @@ void reading_file_to_array(Compare_files info[], int lines){
   int i=0;
   int ret;
   //Open file
-  FILE* file_in_order = fopen("files.txt", "r");
+  FILE* file_in_order = fopen(INFO_FILE_SORTED, "r");
   char buffer[LINE_SIZE_ON_FILE];
   char *second_buffer[6];
 
@@ -136,19 +139,19 @@ int compare_time_last_data_modification( char* path_file_1, char* path_file_2){
 
   //if the diff between the two dates are bigger than 0 it means that file1 date is bigger->1_file is more recent
   if(seconds>0){
-  //  printf("Ficheiro %s é mais recente que ficheiro %s \n",path_file_1,path_file_2);
+    //  printf("Ficheiro %s é mais recente que ficheiro %s \n",path_file_1,path_file_2);
     return 1;
 
   }
 
   //if the diff between the two dates are lesser than 0 it means that file1 date is lesser-> 1_file is older
   else if(seconds<0){
-  //  printf("ficheiro %s é mais antigo que  %s \n",path_file_1,path_file_2);
+    //  printf("ficheiro %s é mais antigo que  %s \n",path_file_1,path_file_2);
     return 2;
   }
 
   else{
-  //  printf("as datas sao iguais\n");
+    //  printf("as datas sao iguais\n");
     return 0;
   }
   return 0;
@@ -183,11 +186,14 @@ int compare_file_permissons(char *path_file_1, char *path_file_2){
 
 int compare_file_content(char *path_file_1, char *path_file_2){
 
+  //reseting blank spaces on the strings
   path_file_1 = strtok(path_file_1, " ");
   path_file_2 = strtok(path_file_2, " ");
 
+  //opening the files, with the respective path
   FILE* file_1= fopen(path_file_1, "r");
   FILE* file_2= fopen(path_file_2, "r");
+
   bool eof=false;
   int ch_file_1;
   int ch_file_2;
@@ -198,13 +204,17 @@ int compare_file_content(char *path_file_1, char *path_file_2){
   }
 
   while(!eof){
+
+    //getting the respective characters to compare
     ch_file_1=getc(file_1);
     ch_file_2=getc(file_2);
 
+    //if they are different the files aren
     if(ch_file_1 != ch_file_2){
       return 1;
     }
 
+    //if the files over
     if(ch_file_1 == EOF || ch_file_2 == EOF){
       eof=true;
     }
@@ -217,18 +227,24 @@ int files_equals_to(Compare_files info[],int position, int* index, int size_of_a
   int i,ret=0,j=1;
   bool found=false;
   for(i=position+1;i<size_of_array;i++){
+    //same size
     if(info[position].size == info[i].size){
+      //same permissions
       if(compare_file_permissons(info[position].path, info[position].path)==0){
+        //same name
         if(strcmp(info[position].name,info[i].name)==0){
+          //if the content of each file are the same
           if(compare_file_content(info[position].path, info[position].path)==0){
-            if(!found){
-              index[j]=position;
+
+            if(!found){            //if exists two files equals puting the  index of the file on position of array info
+              index[j]=position;   //on the array index
               j++;
               ret++;
               found=true;
             }
-            ret++;
-            index[j]=i;
+
+            ret++;          //ret is the number of elements of each line
+            index[j]=i;     //puting index of file info[j] on the array index
             j++;
           }
         }
@@ -237,7 +253,7 @@ int files_equals_to(Compare_files info[],int position, int* index, int size_of_a
   }
 
   if(found)
-    index[0]=ret+1;    //size of each line of array index
+  index[0]=ret+1;    //size of each line of array index
 
   return ret;
 
@@ -253,12 +269,15 @@ void creating_hard_links(Compare_files info[], int info_size, int index[MAX_NUMB
   for(i=0; i<index_size; i++){
     int j;   //cycle used to see what file has the most recent modification date
     for(j = 2; j<index[i][0]; j++){
+
       ret_date = compare_time_last_data_modification(info[index[i][more_recent_file]].path, info[index[i][j]].path);
+
       if(ret_date >= 0){
         more_recent_file = j-1;
       }
       else more_recent_file = j;
     }
+
     fwrite("Path ficheiro de origem:  ", sizeof(char), 26, hard_link_file);
     fwrite(info[index[i][more_recent_file]].path, sizeof(char), strlen(info[index[i][more_recent_file]].path), hard_link_file);
     fwrite("\nPath dos outros ficheiros:  ", sizeof(char), 28, hard_link_file);
@@ -266,12 +285,16 @@ void creating_hard_links(Compare_files info[], int info_size, int index[MAX_NUMB
     //cycle to do the hard links to the file with the most recent modification date
     for(j = 1; j<index[i][0]; j++){
       if( j != more_recent_file){
+
         fwrite(info[index[i][j]].path, sizeof(char), strlen(info[index[i][j]].path), hard_link_file);
         fwrite("     ", sizeof(char), 5, hard_link_file);
+
+        //doing the hard link
         unlink(info[index[i][j]].path);
         link(info[index[i][more_recent_file]].path, info[index[i][j]].path);
       }
     }
+
     fwrite("\n\n", sizeof(char), 2, hard_link_file);
   }
 
@@ -299,6 +322,35 @@ void check_duplicate_files(Compare_files info[], int size_of_array){
 
 }
 
+void fork_to_sort_file(int file_in_order){
+
+  int status;
+
+  pid_t pid = fork();
+  if ( pid == -1){
+    perror("Error on fork");
+    exit(1);
+  }
+  else if ( pid > 0){   //father
+    wait(&status);
+
+    int lines=countlines(INFO_FILE_SORTED);
+    Compare_files info[lines];
+
+    reading_file_to_array(info, lines);
+    check_duplicate_files( info, lines);
+  }
+  else if ( pid == 0){   //child
+    dup2(file_in_order, STDOUT_FILENO);
+
+    execlp("sort", "sort", INFO_FILE_UNSORTED, NULL);
+    
+    perror("execlp ERROR");
+    exit(1);
+  }
+
+}
+
 int main(int argc, char	*argv[]) {
 
 
@@ -307,9 +359,9 @@ int main(int argc, char	*argv[]) {
     exit(1);
   }
 
-  reseting_files();
+  reseting_files();  //to clear the files that are used
 
-  int file_in_order=open("files.txt",   O_APPEND | O_CREAT | O_WRONLY , 0600);
+  int file_in_order=open(INFO_FILE_SORTED,   O_APPEND | O_CREAT | O_WRONLY , 0600);
 
   if(file_in_order == -1){
     perror("Error opening the file files.txt");
@@ -325,24 +377,8 @@ int main(int argc, char	*argv[]) {
   }
   else if(pid > 0){   //father
     wait(&status);
-    pid = fork();
-    if ( pid == -1){
-      perror("Error on fork");
-      exit(1);
-    }
-    else if ( pid > 0){   //father
-      wait(&status);
-      int lines=countlines("files.txt");
-      Compare_files info[lines];
-      reading_file_to_array(info, lines);
-      check_duplicate_files( info, lines);
-    }
-    else if ( pid == 0){   //child
-      dup2(file_in_order, STDOUT_FILENO);
-      execlp("sort", "sort", "file_disorderly.txt", NULL);
-      perror("execlp ERROR");
-      exit(1);
-    }
+
+    fork_to_sort_file(file_in_order);
   }
   else if(pid == 0){  //child
     execlp("./listdir","listdir", argv[1], NULL);
