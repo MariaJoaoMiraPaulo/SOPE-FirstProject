@@ -27,7 +27,7 @@ int result=0;
 typedef struct {
   char name[SIZE_BUFFER_NAME];
   unsigned int size;
-    char path[SIZE_BUFFER_PATH];
+  char path[SIZE_BUFFER_PATH];
 }Compare_files;
 
 void resetingFiles(){
@@ -175,7 +175,7 @@ int compare_file_permissons(char *path_file_1, char *path_file_2){
   //the two files have the same permissons
   printf("Permissons1 :%d Permissons2: %d \n",path_file_1_permissons ,path_file_2_permissons);
   if(path_file_1_permissons==path_file_2_permissons){
-      return 0;
+    return 0;
   }
 
 
@@ -216,17 +216,17 @@ int compare_file_content(char *path_file_1, char *path_file_2){
 
 int files_equals_to(Compare_files info[],int position, int* index, int size_of_array){
 
-int i,ret=0,j=1;
-bool found=false;
-for(i=position+1;i<size_of_array;i++){
-  if(info[position].size == info[i].size){
+  int i,ret=0,j=1;
+  bool found=false;
+  for(i=position+1;i<size_of_array;i++){
+    if(info[position].size == info[i].size){
       printf("Size1 :%d Size2: %d \n",info[position].size ,info[i].size);
-  }
-    if(compare_file_permissons(info[position].path, info[position].path)==0)
-      if(strcmp(info[position].name,info[i].name)){
+
+      if(compare_file_permissons(info[position].path, info[position].path)==0){
+        if(strcmp(info[position].name,info[i].name)==0){
           printf("Nome1 :%s Nome2: %s \n",info[position].name ,info[i].name);
-      }
-        if(compare_file_content(info[position].path, info[position].path)==0){
+
+          if(compare_file_content(info[position].path, info[position].path)==0){
             printf("Encontrei 1 ficheiros igual\n");
             if(!found){
               index[j]=position;
@@ -237,32 +237,36 @@ for(i=position+1;i<size_of_array;i++){
             ret++;
             index[j]=i;
             j++;
+          }
         }
-}
-if(found)
+      }
+    }
+  }
+
+  if(found)
   index[0]=ret;
 
-return ret;
+  return ret;
 
 }
 
 void check_duplicate_files(Compare_files info[], int size_of_array){
-int i,ret=0,x=0;
-int index[MAX_NUMBER_FILES][MAX_NUMBER_FILES];
+  int i,ret=0,x=0;
+  int index[MAX_NUMBER_FILES][MAX_NUMBER_FILES];
 
-//int i;
-for(i=0; i< size_of_array; i++){
-  ret=files_equals_to(info,i,index[x],size_of_array);
-  if(ret>0){
-  x++;
-  i=i+ret-1;
+  //int i;
+  for(i=0; i< size_of_array; i++){
+    ret=files_equals_to(info,i,index[x],size_of_array);
+    if(ret>0){
+      x++;
+      i=i+ret-1;
+    }
+
   }
 
-}
-
-for(i=0;i<x;i++){
-  printf("NUMERO DE FICHEIROS IGUAIS %d \n",index[i][0]);
-}
+  for(i=0;i<x;i++){
+    printf("NUMERO DE FICHEIROS IGUAIS %d \n",index[i][0]);
+  }
 
 }
 
