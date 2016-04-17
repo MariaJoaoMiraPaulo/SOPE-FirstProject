@@ -270,6 +270,8 @@ void creating_hard_links(Compare_files info[], int info_size, int index[MAX_NUMB
 
   int ret_date;
   int more_recent_file = 1;
+  //fopen creates an empty file for writing with name hlinks.
+  //If a file with the same name already exists, its content is erased and the file is considered as a new empty file.
   FILE* hard_link_file= fopen("hlinks.txt", "w"); //open the file to put the info relatively to the hard links
 
   int i;
