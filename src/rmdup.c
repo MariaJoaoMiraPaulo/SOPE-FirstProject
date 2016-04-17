@@ -22,9 +22,10 @@
 #define SIZE_BUFFER_NAME 200
 #define SIZE_BUFFER_PATH 200
 #define MAX_NUMBER_FILES 100
-#define PATH_ORIGIN_FILE 26
-#define PATH_OTHER_FILES 28
+#define PATH_ORIGIN_FILE 19
+#define PATH_OTHER_FILES 19
 #define BLANK_SPACES 5
+#define INODE_SIZE 20
 
 #define INFO_FILE_SORTED "files.txt"
 #define INFO_FILE_UNSORTED "file_disorderly.txt"
@@ -33,9 +34,11 @@ typedef struct {
   char name[SIZE_BUFFER_NAME];
   unsigned int size;
   char path[SIZE_BUFFER_PATH];
+  unsigned int inode;
 }Compare_files;
 
-void reseting_files(){ //erase content of files.txt and file_disorderly.txt
+void reseting_files(){
+  //erase content of files.txt and file_disorderly.txt
   //fopen creates an empty file for writing.
   //If a file with the same name already exists, its content is erased and the file is considered as a new empty file.
   FILE* file1 = fopen(INFO_FILE_SORTED, "w");
@@ -113,6 +116,8 @@ void reading_file_to_array(Compare_files info[], int lines){
     strcpy(info[i].name,second_buffer[0]);
     info[i].size = atoi(second_buffer[2]);
     strcpy(info[i].path,second_buffer[5]);
+    info[i].inode = atoi(second_buffer[1]);
+
 
     i++;
   }
@@ -287,15 +292,23 @@ void creating_hard_links(Compare_files info[], int info_size, int index[MAX_NUMB
       else more_recent_file = j;
     }
 
+    char buffer[INODE_SIZE];
+
+    sprintf( buffer, "%d", info[index[i][more_recent_file]].inode);
     fwrite("Origin file path:  ", sizeof(char), PATH_ORIGIN_FILE, hard_link_file);
     fwrite(info[index[i][more_recent_file]].path, sizeof(char), strlen(info[index[i][more_recent_file]].path), hard_link_file);
+    fwrite("     ", sizeof(char), BLANK_SPACES, hard_link_file);
+    fwrite(buffer, sizeof(char), strlen(buffer), hard_link_file);
     fwrite("\nOther files path: ", sizeof(char), PATH_OTHER_FILES, hard_link_file);
 
     //cycle to do the hard links to the file with the most recent modification date
     for(j = 1; j<index[i][0]; j++){
       if( j != more_recent_file){
 
+        sprintf( buffer, "%d", info[index[i][j]].inode);
         fwrite(info[index[i][j]].path, sizeof(char), strlen(info[index[i][j]].path), hard_link_file);
+        fwrite("     ", sizeof(char), BLANK_SPACES, hard_link_file);
+        fwrite(buffer, sizeof(char), strlen(buffer), hard_link_file);
         fwrite("     ", sizeof(char), BLANK_SPACES, hard_link_file);
 
         //doing the hard link
