@@ -1,16 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <dirent.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/wait.h>
-#include <fcntl.h>
-#include <inttypes.h>
-#include <time.h>
-#include <stdbool.h>
+#include "rmdup.h"
 
 #define LINE_SIZE_ON_FILE 146
 #define INDEX_NAME 0
@@ -30,15 +18,8 @@
 #define INFO_FILE_SORTED "files.txt"
 #define INFO_FILE_UNSORTED "file_disorderly.txt"
 
-typedef struct {
-  char name[SIZE_BUFFER_NAME];
-  unsigned int size;
-  char path[SIZE_BUFFER_PATH];
-  unsigned int inode;
-}Compare_files;
-
 void reseting_files(){
-  //erase content of files.txt and file_disorderly.txt
+
   //fopen creates an empty file for writing.
   //If a file with the same name already exists, its content is erased and the file is considered as a new empty file.
   FILE* file1 = fopen(INFO_FILE_SORTED, "w");
@@ -53,9 +34,7 @@ void reseting_files(){
   fclose(file2);
 }
 
-//Count the number of lines in the file called filename
-int countlines(char *filename)
-{
+int countlines(char *filename){
   //Open the file
   FILE *fp = fopen(filename,"r");
   int ch=0;
@@ -74,7 +53,6 @@ int countlines(char *filename)
   return lines;
 }
 
-//Read file and load information on array of the type Compare_files (struct)
 void reading_file_to_array(Compare_files info[], int lines){
 
   int i=0;
@@ -126,7 +104,6 @@ void reading_file_to_array(Compare_files info[], int lines){
   fclose(file_in_order);
 }
 
-//Compare time of last data modification of two files, one with path_file_1 and another with path_file_2
 int compare_time_last_data_modification( char* path_file_1, char* path_file_2){
 
   path_file_1 = strtok(path_file_1, " ");
@@ -149,25 +126,25 @@ int compare_time_last_data_modification( char* path_file_1, char* path_file_2){
 
   //if the diff between the two dates are bigger than 0 it means that file1 date is bigger->1_file is more recent
   if(seconds>0){
-    //  printf("File %s is more recent than file %s \n",path_file_1,path_file_2);
+    //  File with path_file_1 is more recent than file with path_file_2
     return 1;
 
   }
 
   //if the diff between the two dates are lesser than 0 it means that file1 date is lesser-> 1_file is older
   else if(seconds<0){
-    // printf("fFile %s is older than %s \n",path_file_1,path_file_2);
+    // File with path_file_1 is older than file with path_file_2
     return 2;
   }
 
   else{
-    // printf("Exactly the same dates\n");
+    // Exactly the same dates
     return 0;
   }
   return 0;
 
 }
-//Compare files's modes, one with path_file_1 and another with path_file_2
+
 int compare_file_permissons(char *path_file_1, char *path_file_2){
 
   path_file_1 = strtok(path_file_1, " ");
@@ -194,7 +171,6 @@ int compare_file_permissons(char *path_file_1, char *path_file_2){
 
 }
 
-//Compare file content of two files,one with path_file_1 and another with path_file_2
 int compare_file_content(char *path_file_1, char *path_file_2){
 
   //reseting blank spaces on the strings
@@ -233,7 +209,6 @@ int compare_file_content(char *path_file_1, char *path_file_2){
   return 0;
 }
 
-//Return how many files are equal to file loaded on info[position]
 int files_equals_to(Compare_files info[],int position, int* index, int size_of_array){
 
   int i,ret=0,j=1;
@@ -403,7 +378,7 @@ int main(int argc, char	*argv[]) {
     fork_to_sort_file(file_in_order);
   }
   else if(pid == 0){  //child
-    execlp("./listdir","listdir", argv[1], NULL);
+    execlp("./lsdir","lsdir", argv[1], NULL);
     perror("execlp ERROR");
     exit(1);
   }
