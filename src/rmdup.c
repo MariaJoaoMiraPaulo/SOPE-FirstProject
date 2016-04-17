@@ -22,6 +22,9 @@
 #define SIZE_BUFFER_NAME 200
 #define SIZE_BUFFER_PATH 200
 #define MAX_NUMBER_FILES 100
+#define PATH_ORIGIN_FILE 26
+#define PATH_OTHER_FILES 28
+#define BLANK_SPACES 5
 
 #define INFO_FILE_SORTED "files.txt"
 #define INFO_FILE_UNSORTED "file_disorderly.txt"
@@ -32,7 +35,9 @@ typedef struct {
   char path[SIZE_BUFFER_PATH];
 }Compare_files;
 
-void reseting_files(){
+void reseting_files(){ //erase content of files.txt and file_disorderly.txt
+  //fopen creates an empty file for writing.
+  //If a file with the same name already exists, its content is erased and the file is considered as a new empty file.
   FILE* file1 = fopen(INFO_FILE_SORTED, "w");
   FILE* file2 = fopen(INFO_FILE_UNSORTED , "w");
 
@@ -116,7 +121,7 @@ void reading_file_to_array(Compare_files info[], int lines){
   fclose(file_in_order);
 }
 
-
+//Compare time of last data modification of two files, one with path_file_1 and another with path_file_2
 int compare_time_last_data_modification( char* path_file_1, char* path_file_2){
 
   path_file_1 = strtok(path_file_1, " ");
@@ -139,25 +144,25 @@ int compare_time_last_data_modification( char* path_file_1, char* path_file_2){
 
   //if the diff between the two dates are bigger than 0 it means that file1 date is bigger->1_file is more recent
   if(seconds>0){
-    //  printf("Ficheiro %s é mais recente que ficheiro %s \n",path_file_1,path_file_2);
+    //  printf("File %s is more recent than file %s \n",path_file_1,path_file_2);
     return 1;
 
   }
 
   //if the diff between the two dates are lesser than 0 it means that file1 date is lesser-> 1_file is older
   else if(seconds<0){
-    //  printf("ficheiro %s é mais antigo que  %s \n",path_file_1,path_file_2);
+    // printf("fFile %s is older than %s \n",path_file_1,path_file_2);
     return 2;
   }
 
   else{
-    //  printf("as datas sao iguais\n");
+    // printf("Exactly the same dates\n");
     return 0;
   }
   return 0;
 
 }
-
+//Compare files's modes, one with path_file_1 and another with path_file_2
 int compare_file_permissons(char *path_file_1, char *path_file_2){
 
   path_file_1 = strtok(path_file_1, " ");
@@ -184,6 +189,7 @@ int compare_file_permissons(char *path_file_1, char *path_file_2){
 
 }
 
+//Compare file content of two files,one with path_file_1 and another with path_file_2
 int compare_file_content(char *path_file_1, char *path_file_2){
 
   //reseting blank spaces on the strings
@@ -222,6 +228,7 @@ int compare_file_content(char *path_file_1, char *path_file_2){
   return 0;
 }
 
+//Return how many files are equal to file loaded on info[position]
 int files_equals_to(Compare_files info[],int position, int* index, int size_of_array){
 
   int i,ret=0,j=1;
@@ -278,16 +285,16 @@ void creating_hard_links(Compare_files info[], int info_size, int index[MAX_NUMB
       else more_recent_file = j;
     }
 
-    fwrite("Path ficheiro de origem:  ", sizeof(char), 26, hard_link_file);
+    fwrite("Origin file path:  ", sizeof(char), PATH_ORIGIN_FILE, hard_link_file);
     fwrite(info[index[i][more_recent_file]].path, sizeof(char), strlen(info[index[i][more_recent_file]].path), hard_link_file);
-    fwrite("\nPath dos outros ficheiros:  ", sizeof(char), 28, hard_link_file);
+    fwrite("\nOther files path: ", sizeof(char), PATH_OTHER_FILES, hard_link_file);
 
     //cycle to do the hard links to the file with the most recent modification date
     for(j = 1; j<index[i][0]; j++){
       if( j != more_recent_file){
 
         fwrite(info[index[i][j]].path, sizeof(char), strlen(info[index[i][j]].path), hard_link_file);
-        fwrite("     ", sizeof(char), 5, hard_link_file);
+        fwrite("     ", sizeof(char), BLANK_SPACES, hard_link_file);
 
         //doing the hard link
         unlink(info[index[i][j]].path);
@@ -344,7 +351,7 @@ void fork_to_sort_file(int file_in_order){
     dup2(file_in_order, STDOUT_FILENO);
 
     execlp("sort", "sort", INFO_FILE_UNSORTED, NULL);
-    
+
     perror("execlp ERROR");
     exit(1);
   }
